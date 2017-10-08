@@ -1,27 +1,14 @@
 package com.example.android.shushme;
 
-/*
-* Copyright (C) 2017 The Android Open Source Project
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*  	http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
 
 import android.app.NotificationManager;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -42,7 +29,6 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
-import com.example.android.shushme.provider.PlaceContract;
 import com.example.android.shushme.provider.PlaceContract.PlaceEntry;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -67,6 +53,10 @@ public class MainActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener,
         LoaderManager.LoaderCallbacks<Cursor>
 {
+    // Constants
+    public static final String TAG = MainActivity.class.getSimpleName();
+    private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 111;
+    private static final int PLACE_PICKER_REQUEST = 1;
     //BindViews (with id)
     @BindView(R.id.location_permissions_check_box)
     CheckBox locationPermissions;
@@ -78,12 +68,6 @@ public class MainActivity extends AppCompatActivity implements
     Switch onOffSwitch;
     @BindView(R.id.ringer_permissions_checkbox)
     CheckBox ringerCheckbox;
-
-    // Constants
-    public static final String TAG = MainActivity.class.getSimpleName();
-    private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 111;
-    private static final int PLACE_PICKER_REQUEST = 1;
-
     // Member variables
     private PlaceListAdapter mAdapter;
     private RecyclerView mRecyclerView;
@@ -145,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements
         // TODO (4.8) Create a new instance of Geofencing using "this" as the context and mClient as the client
         mGeofencing= new Geofencing(this, mClient);
 
-                // TODO (1.8) Implement onLocationPermissionClicked to handle the CheckBox click event
+        // TODO (3.8) Implement onLocationPermissionClicked to handle the CheckBox click event
         locationPermissions.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -153,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
 
-        // TODO (1.9) Implement the Add Place Button click event to show  a toast message with the permission status
+        // TODO (3.9) Implement the Add Place Button click event to show  a toast message with the permission status
         addLocationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -161,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
 
-        // TODO (2) Implement onRingerPermissionsClicked to launch ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS
+        // TODO (5.2) Implement onRingerPermissionsClicked to launch ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS
         ringerCheckbox.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -170,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
 
-        //TODO (3) Initialize ringer permissions checkbox
+        //TODO (5.3) Initialize ringer permissions checkbox
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         //check if the API supports such permissions change and check if permission is granted
         if (Build.VERSION.SDK_INT>=24 && !nm.isNotificationPolicyAccessGranted()){
@@ -188,6 +172,15 @@ public class MainActivity extends AppCompatActivity implements
                 Log.v("CatalogActivity", rowsDeleted + " rows deleted from product database");
                 mAdapter.swapPlaces( null);
                 mRecyclerView.setAdapter(mAdapter);
+                mGeofencing.unRegisterAllGeofences();
+
+                NotificationManager nm = (NotificationManager) getApplication()
+                        .getSystemService(Context.NOTIFICATION_SERVICE);
+                if (Build.VERSION.SDK_INT < 24 ||
+                        (Build.VERSION.SDK_INT >= 24 && !nm.isNotificationPolicyAccessGranted())) {
+                    AudioManager audioManager = (AudioManager) getApplication().getSystemService(Context.AUDIO_SERVICE);
+                    audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                }
             }
         });
     }

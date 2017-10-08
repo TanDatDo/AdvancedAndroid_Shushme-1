@@ -3,7 +3,6 @@ package com.example.android.shushme;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.nfc.Tag;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -29,16 +28,15 @@ import java.util.List;
 //implements ResultCallback to enable setCallback method in the RegisterAllGeoFences
 public class Geofencing implements ResultCallback {
 
+    //constants
+    private static final long GEOFENCE_TIMEOUT = 24 * 60 * 60 * 1000;//24 hours
+    private static final float GEOFENCE_RADIUS = 100; //50 meters
+    private static final String TAG = Geofencing.class.getSimpleName();
     //private variables
     private List<Geofence> mGeofenceList;
     private PendingIntent mGeofencePendingIntent;
     private GoogleApiClient mGoogleApiClient;
     private Context mContext;
-
-    //constants
-    private static final long GEOFENCE_TIMEOUT = 24*60*60*1000;//24 hours
-    private static final float GEOFENCE_RADIUS = 50; //50 meters
-    private static final String TAG= Geofencing.class.getSimpleName();
 
     public Geofencing(Context context, GoogleApiClient client){
         mContext= context;
